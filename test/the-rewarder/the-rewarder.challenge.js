@@ -36,57 +36,57 @@ describe('[Challenge] The rewarder', function () {
         expect(await accountingToken.hasAllRoles(rewarderPool.address, minterRole | snapshotRole | burnerRole)).to.be.true;
 
         // Alice, Bob, Charlie and David deposit tokens
-        let depositAmount = 100n * 10n ** 18n; 
+        let depositAmount = 100n * 10n ** 18n;
         for (let i = 0; i < users.length; i++) {
             await liquidityToken.transfer(users[i].address, depositAmount);
             await liquidityToken.connect(users[i]).approve(rewarderPool.address, depositAmount);
             await rewarderPool.connect(users[i]).deposit(depositAmount);
-            expect(
-                await accountingToken.balanceOf(users[i].address)
-            ).to.be.eq(depositAmount);
+            expect(await accountingToken.balanceOf(users[i].address)).to.be.eq(depositAmount);
         }
         expect(await accountingToken.totalSupply()).to.be.eq(depositAmount * BigInt(users.length));
         expect(await rewardToken.totalSupply()).to.be.eq(0);
 
         // Advance time 5 days so that depositors can get rewards
-        await ethers.provider.send("evm_increaseTime", [5 * 24 * 60 * 60]); // 5 days
-        
+        await ethers.provider.send('evm_increaseTime', [5 * 24 * 60 * 60]); // 5 days
+
         // Each depositor gets reward tokens
         let rewardsInRound = await rewarderPool.REWARDS();
         for (let i = 0; i < users.length; i++) {
             await rewarderPool.connect(users[i]).distributeRewards();
-            expect(
-                await rewardToken.balanceOf(users[i].address)
-            ).to.be.eq(rewardsInRound.div(users.length));
+            expect(await rewardToken.balanceOf(users[i].address)).to.be.eq(rewardsInRound.div(users.length));
         }
         expect(await rewardToken.totalSupply()).to.be.eq(rewardsInRound);
 
         // Player starts with zero DVT tokens in balance
         expect(await liquidityToken.balanceOf(player.address)).to.eq(0);
-        
+
         // Two rounds must have occurred so far
         expect(await rewarderPool.roundNumber()).to.be.eq(2);
     });
 
     it('Execution', async function () {
         /** CODE YOUR SOLUTION HERE */
+        // Advance time 5 days so that depositors can get rewards
+        await ethers.provider.send('evm_increaseTime', [5 * 24 * 60 * 60]); // 5 days
+        const attacker = await (
+            await ethers.getContractFactory('RewarderAttacker', player)
+        ).deploy(liquidityToken.address, rewardToken.address, rewarderPool.address, flashLoanPool.address, player.address);
+        await attacker.attack();
     });
 
     after(async function () {
         /** SUCCESS CONDITIONS - NO NEED TO CHANGE ANYTHING HERE */
         // Only one round must have taken place
-        expect(
-            await rewarderPool.roundNumber()
-        ).to.be.eq(3);
+        expect(await rewarderPool.roundNumber()).to.be.eq(3);
 
         // Users should get neglegible rewards this round
         for (let i = 0; i < users.length; i++) {
             await rewarderPool.connect(users[i]).distributeRewards();
             const userRewards = await rewardToken.balanceOf(users[i].address);
             const delta = userRewards.sub((await rewarderPool.REWARDS()).div(users.length));
-            expect(delta).to.be.lt(10n ** 16n)
+            expect(delta).to.be.lt(10n ** 16n);
         }
-        
+
         // Rewards must have been issued to the player account
         expect(await rewardToken.totalSupply()).to.be.gt(await rewarderPool.REWARDS());
         const playerRewards = await rewardToken.balanceOf(player.address);
@@ -98,8 +98,6 @@ describe('[Challenge] The rewarder', function () {
 
         // Balance of DVT tokens in player and lending pool hasn't changed
         expect(await liquidityToken.balanceOf(player.address)).to.eq(0);
-        expect(
-            await liquidityToken.balanceOf(flashLoanPool.address)
-        ).to.eq(TOKENS_IN_LENDER_POOL);
+        expect(await liquidityToken.balanceOf(flashLoanPool.address)).to.eq(TOKENS_IN_LENDER_POOL);
     });
 });
