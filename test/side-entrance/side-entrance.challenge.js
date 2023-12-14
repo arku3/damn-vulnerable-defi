@@ -21,13 +21,12 @@ describe('[Challenge] Side entrance', function () {
         // Player starts with limited ETH in balance
         await setBalance(player.address, PLAYER_INITIAL_ETH_BALANCE);
         expect(await ethers.provider.getBalance(player.address)).to.eq(PLAYER_INITIAL_ETH_BALANCE);
-
     });
 
     it('Execution', async function () {
         /** CODE YOUR SOLUTION HERE */
         let attacker = await (await ethers.getContractFactory('SideEntranceAttacker', player)).deploy(pool.address);
-        await attacker.connect(player).attack(player.address);
+        // await attacker.connect(player).attack(player.address);
     });
 
     after(async function () {
